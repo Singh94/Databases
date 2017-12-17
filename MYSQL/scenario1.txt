@@ -1,0 +1,102 @@
+CREATE DATABASE IF NOT EXISTS AnimalAdoption;
+USE AnimalAdoption;
+
+CREATE TABLE pet ( petID INT NOT NULL AUTO_INCREMENT, 
+			petName VARCHAR(50), 
+			petType VARCHAR(50), 
+			petBreed VARCHAR(50), 
+			petGender ENUM('M', 'F'), 
+			petNeutered ENUM('Y', 'N', 'B'), 
+			petHomed ENUM('Y', 'N'),
+			arrivalDate DATE,
+			PRIMARY KEY(petID)
+);
+
+CREATE TABLE vet ( vetID INT NOT NULL AUTO_INCREMENT,
+			vetName VARCHAR(50),
+			PRIMARY KEY(vetID)
+);
+
+CREATE TABLE appointment ( appointmentID INT NOT NULL AUTO_INCREMENT,
+				fkVetID INT,
+				fkPetID INT,
+				appointmentDate DATETIME,
+				PRIMARY KEY(appointmentID),
+				FOREIGN KEY(fkVetID) REFERENCES vet(vetID),
+				FOREIGN KEY(fkPetID) REFERENCES pet(petID)
+);
+
+
+
+
+INSERT INTO pet(petName, petType, petBreed, petGender, petNeutered, petHomed, arrivalDate) VALUES("Bobby", "Dog", "CockerPoodle", "M", "Y", "Y", "2009-01-28"); 
+INSERT INTO pet(petName, petType, petBreed, petGender, petNeutered, petHomed, arrivalDate) VALUES("Sam", "Dog", "CockerPoodle", "M", "Y", "Y", "2008-06-14");
+INSERT INTO pet(petName, petType, petBreed, petGender, petNeutered, petHomed, arrivalDate) VALUES("Luna", "Cat", "Siamese", "F", "N", "Y", "2015-07-02"); 
+INSERT INTO pet(petName, petType, petBreed, petGender, petNeutered, petHomed, arrivalDate) VALUES("Edward", "Bearded Dragon", "Pogona Barbata", "M", "N", "N", "2017-03-23");
+INSERT INTO pet(petName, petType, petBreed, petGender, petNeutered, petHomed, arrivalDate) VALUES("Lucky", "Hamster", "Roborovski Dwarf Hamsters", "M", "N", "N", "2014-05-12");
+
+INSERT INTO vet(vetName) Values("Khem");
+INSERT INTO vet(vetName) Values("Samuel");
+INSERT INTO vet(vetName) Values("Richard");
+INSERT INTO vet(vetName) Values("Rick");
+INSERT INTO vet(vetName) Values("Bob");
+
+INSERT INTO appointment(fkVetID, fkPetID, appointmentDate) VALUES("1", "4", now());
+
+
+CREATE USER 'vet'@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT, UPDATE ON * . * TO 'vet'@'localhost';
+FLUSH PRIVILEGES;
+
+CREATE USER 'healthcareofficer'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON * . * TO 'healthcareofficer'@'localhost';
+FLUSH PRIVILEGES;
+
+CREATE USER 'socialmediaconsultant'@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT ON * . * TO 'healthcareofficer'@'localhost';
+FLUSH PRIVILEGES;
+
+CREATE USER 'receptionist'@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT, UPDATE ON * . * TO 'receptionist'@'localhost';
+FLUSH PRIVILEGES;
+
+#1) As a Health Care Officer, I want to find all pets that are not neutered.
+SELECT * FROM pet WHERE petNeutered IS N;
+
+#2) As a social media consultant, i want to find which animals have been there the longest
+SELECT * FROM pet ORDER BY arrivalDate;
+
+#3) As a receptionist, I want to search by specific criteria.
+SELECT * FROM pet WHERE petType = "Dog" OR petType = "Cat";
+SELECT * FROM pet WHERE petBreed = "Siamese";
+SELECT * FROM pet WHERE petHomed = "N";
+
+#4) As a receptionist, I want to know how many pets are not homed.
+SELECT COUNT(petID) AS "Not Homed" FROM pet WHERE petHomed = "N";
+
+#5) As a Health Care Officer, I want to be able to book appointments for pets that have not been neutered. //
+INSERT INTO appointment (fkVetID, fkPetID, appointmentDate) SELECT v.vetID, p.petID, DATE_ADD(NOW(), INTERVAL 14 DAY) FROM vet v, pet p WHERE v.VetID = "2" AND p.petNeutered = "N" LIMIT 1;
+
+#6) As a vet, I want to see how many appointments I have in the next month
+SELECT v.vetName, COUNT(fkVetID) AS "# Of Appointments" FROM vet v JOIN appointment a ON v.vetID = a.fkVetID GROUP BY v.vetID;
+
+#7) As a vet, I want to see all my appointments 
+SELECT v.vetName, a.appointmentDate AS "All Appointments" FROM vet v JOIN appointment a ON v.vetID = a.fkVetID ORDER BY v.vetName;
+
+#8) As a customer, I want to know what pet has been adopted the most
+SELECT petType, COUNT(petHomed) AS "Amount Homed" FROM pet WHERE petHomed = "Y" GROUP BY petType DESC;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
